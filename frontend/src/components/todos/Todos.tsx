@@ -5,7 +5,6 @@ import AddTodo from './AddTodo'
 import { useAppSelector, useAppDispatch, Toast } from '../../state/hooks'
 import { getTodos } from '../../state/features/todos/todosSlice'
 import { authSignOut } from '../../state/features/auth/authSlice'
-import LoadingTodo from './LoadingTodo'
 
 const Todos: React.FC = () => {
     const [open, setOpen] = useState<boolean>(false)
@@ -65,25 +64,20 @@ const Todos: React.FC = () => {
                     )}
                 </Grid>
 
-                {todoList.length > 0
-                    ? todoList.map(
-                          ({ _id, notes, author, createdAt, isComplete }) => (
-                              <Grid key={_id} item xs={12} sm={6} md={4}>
-                                  <ListTodos
-                                      _id={_id}
-                                      notes={notes}
-                                      author={author}
-                                      createdAt={createdAt}
-                                      isComplete={isComplete}
-                                  />
-                              </Grid>
-                          )
-                      )
-                    : [...Array(1)].map((el, id) => (
-                          <Grid key={id} item xs={12} sm={6} md={4}>
-                              <LoadingTodo />
-                          </Grid>
-                      ))}
+                {todoList.length > 0 &&
+                    todoList.map(
+                        ({ _id, notes, author, createdAt, isComplete }) => (
+                            <Grid key={_id} item xs={12} sm={6} md={4}>
+                                <ListTodos
+                                    _id={_id}
+                                    notes={notes}
+                                    author={author}
+                                    createdAt={createdAt}
+                                    isComplete={isComplete}
+                                />
+                            </Grid>
+                        )
+                    )}
             </Grid>
         </>
     )

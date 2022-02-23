@@ -13,9 +13,10 @@ import CreateIcon from '@mui/icons-material/Create'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { completeTodo, Todo } from '../../state/features/todos/todosSlice'
 import DeleteTodo from './DeleteTodo'
-import { useAppDispatch } from '../../state/hooks'
+import { useAppDispatch, useAppSelector } from '../../state/hooks'
 import { useNavigate } from 'react-router-dom'
 import UpdateTodo from './UpdateTodo'
+import LoadingTodo from './LoadingTodo'
 
 const ListTodos: FC<Todo> = (props) => {
     const [delOpen, delSetOpen] = useState<boolean>(false)
@@ -32,8 +33,8 @@ const ListTodos: FC<Todo> = (props) => {
 
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
-
-    return (
+    const isLoading = useAppSelector((state) => state.todos.isLoading)
+    return !isLoading ? (
         <>
             <DeleteTodo
                 delOpen={delOpen}
@@ -92,6 +93,8 @@ const ListTodos: FC<Todo> = (props) => {
                 </CardActions>
             </Card>
         </>
+    ) : (
+        <LoadingTodo />
     )
 }
 
