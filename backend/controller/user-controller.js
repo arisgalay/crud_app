@@ -5,18 +5,22 @@ const jwt = require('jsonwebtoken')
 
 const signUp = async (req, res) => {
     const schema = Joi.object({
-        name: Joi.string().min(2).max(30).required(),
+        name: Joi.string()
+            .pattern(/^[a-z ,.'-]+$/i, { name: 'alpha' })
+            .min(2)
+            .max(30)
+            .required(),
         email: Joi.string().min(3).max(200).email().required(),
         password: Joi.string().min(6).max(200).required(),
     })
 
     const { error } = schema.validate(req.body)
 
-    if (error) return res.status(400).send({ message: error.details[0].message })
+    if (error) return res.status(400).json({ message: error.details[0].message })
 
     try {
         let user = await User.findOne({ email: req.body.email })
-        if (user) return res.status(400).send({ message: 'Email already exist.' })
+        if (user) return res.status(400).json({ message: 'Invalid Credentials.' })
 
         const { name, email, password } = req.body
 
@@ -31,15 +35,14 @@ const signUp = async (req, res) => {
 
         await user.save()
 
-        const secretKey = process.env.SECRET_KEY
-        const token = jwt.sign(
-            { _id: user._id, name: user.name, email: user.email },
-            secretKey
-        )
-
-        res.send(token)
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            accessToken: generateToken(user),
+        })
     } catch (err) {
-        res.status(500).send(err.message)
+        res.status(500).json(err.message)
     }
 }
 
@@ -50,25 +53,39 @@ const signIn = async (req, res) => {
     })
 
     const { error } = schema.validate(req.body)
-    if (error) return res.status(400).send({ message: error.details[0].message })
+    if (error) return res.status(400).json({ message: error.details[0].message })
 
     try {
         let user = await User.findOne({ email: req.body.email })
-        if (!user) return res.status(400).send({ message: 'Invalid email or password.' })
 
-        const validPass = await bcrypt.compare(req.body.password, user.password)
-        if (!validPass) res.status(400).send({ message: 'Invalid email or password.' })
+        if (!user || !(await bcrypt.compare(req.body.password, user.password)))
+            return res.status(400).json({ message: 'Invalid Credentials.' })
 
-        const secretKey = process.env.SECRET_KEY
-        const token = jwt.sign(
-            { _id: user._id, name: user.name, email: user.email },
-            secretKey
-        )
-        res.send(token)
-    } catch (error) {
-        res.status(500).send(err.message)
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            accessToken: generateToken(user),
+        })
+    } catch (err) {
+        res.status(500).json(err.message)
     }
+}
+
+const getUser = async (req, res) => {
+    res.status(500).json(req.user)
+}
+
+const generateToken = (user) => {
+    return jwt.sign(
+        { _id: user._id, name: user.name, email: user.email },
+        process.env.SECRET_KEY,
+        {
+            expiresIn: '1h',
+        }
+    )
 }
 
 exports.signUp = signUp
 exports.signIn = signIn
+exports.getUser = getUser
